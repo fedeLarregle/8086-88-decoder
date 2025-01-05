@@ -183,13 +183,9 @@ int main(int argc, char *argv[]) {
                         }
                     } else {
                         if (is_reg_destination) {
-                            printf("mov %s, ", reg);
-                            printf(calc, b16);
-                            printf("\n");
+                            printf("mov %s, %s\n", reg, calc);
                         } else {
-                            printf("mov ");
-                            printf(calc, b16);
-                            printf(", %s\n", reg);
+                            printf("mov %s, %s\n", calc, reg);
                         }
                     }
                     break;
