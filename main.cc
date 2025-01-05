@@ -26,28 +26,13 @@ bool check_pattern(uint8_t byte, uint8_t pattern, uint8_t mask) {
     return (byte & mask) == pattern;
 }
 
-const char * reg_wide[8] = {
-    [0] = "ax", [1] = "cx", [2] = "dx",
-    [3] = "bx", [4] = "sp", [5] = "bp",
-    [6] = "si", [7] = "di"
-};
-
-const char * reg_non_wide[8] = {
-    [0] = "al", [1] = "cl", [2] = "dl",
-    [3] = "bl", [4] = "ah", [5] = "ch",
-    [6] = "dh", [7] = "bh"
-};
-
-const char * rm_wide[8] = {
-    [0] = "ax", [1] = "cx", [2] = "dx",
-    [3] = "bx", [4] = "sp", [5] = "bp",
-    [6] = "si", [7] = "di"
-};
-
-const char * rm_non_wide[8] = {
-    [0] = "al", [1] = "cl", [2] = "dl",
-    [3] = "bl", [4] = "ah", [5] = "ch",
-    [6] = "dh", [7] = "bh"
+const char * reg_rm[16] = {
+    [0]  = "ax", [1]  = "cx", [2]  = "dx",
+    [3]  = "bx", [4]  = "sp", [5]  = "bp",
+    [6]  = "si", [7]  = "di", [8]  = "al",
+    [9]  = "cl", [10] = "dl", [11] = "bl",
+    [12] = "ah", [13] = "ch", [14] = "dh",
+    [15] = "bh"
 };
 
 int main(int argc, char *argv[]) {
@@ -70,15 +55,19 @@ int main(int argc, char *argv[]) {
     unsigned char buffer[1024];
     uint8_t byte;
     uint8_t mov_pattern = 0b100010;
-    uint8_t mask = 0b111111;
+    uint8_t mov_mask = 0b111111;
 
     while ((fread(&byte, 1, 1, file))) {
         // NOTE(fede): Check if we have found a mov
         // instruction without considering D W bits
-        if (check_pattern(byte >> 2, mov_pattern, mask)) {
+        if (check_pattern(byte >> 2, mov_pattern, mov_mask)) {
             // NOTE(fede): Check D bit
             bool is_reg_destination = (byte & 0b00000010) == 0b00000010;
             bool is_wide_register = (byte & 0b00000001) == 0b00000001;
+            uint8_t wide_offset = 0;
+            if (!is_wide_register) {
+                wide_offset += 8;
+            }
 
             size_t read_byte = fread(&byte, 1, 1, file);
             if (!read_byte) {
@@ -88,15 +77,8 @@ int main(int argc, char *argv[]) {
 
             bool register_mode = ((byte >> 6) & 0b00000011) == 0b00000011;
 
-            const char *reg;
-            const char *rm;
-            if (is_wide_register) {
-                reg = reg_wide[((byte >> 3) & 0b00000111)];
-                rm = rm_wide[((byte) & 0b00000111)];
-            } else {
-                reg = reg_non_wide[((byte >> 3) & 0b00000111)];
-                rm = rm_non_wide[((byte) & 0b00000111)];
-            }
+            const char *reg = reg_rm[((byte >> 3) & 0b00000111) + wide_offset];
+            const char *rm = reg_rm[((byte) & 0b00000111) + wide_offset];
 
             if (is_reg_destination) {
                 printf("mov %s, %s\n", reg, rm);
