@@ -112,7 +112,6 @@ int main(int argc, char *argv[]) {
             const uint8_t mod_no_disp_ = 0b00000000;
             
             switch (register_mode) {
-                
                 case mod_reg_to_reg: {
                     const char *rm_reg = reg_rm[(rm + wide_offset)];
 
@@ -218,12 +217,22 @@ int main(int argc, char *argv[]) {
                 }
                 printf("mov %s, %d\n", reg, byte);
             }
+        } else if (((byte >> 1) & 0b1111111) == 0b1100011) {
+            // TODO(fede): Add immediate to register
+            // e.g.: mov [BP + 75], 12
+            // that requires extra information to know wether is
+            // an 8 bit or a 16 bit mov. For that we include extra
+            // keywords as follows: mov [BP + 75], byte/word 12 (8bits/16bits respectively)
+            bool is_wide_register = (byte & 0b00000010) == 0b00000010;
+            uint8_t wide_offset = is_wide_register ? 0b00000000 : 0b00001000;
+
+
+        } else if (((byte >> 1) & 0b1111111) == 0b1010000) {
+            // TODO(fede): Memory to accumulator
+        } else if (((byte >> 1) & 0b1111111) == 0b1010001) {
+            // TODO(fede): Accumulator to memory
         }
-        // TODO(fede): Add immediate to register
-        // e.g.: mov [BP + 75], 12
-        // that requires extra information to know wether is
-        // an 8 bit or a 16 bit mov. For that we include extra
-        // keywords as follows: mov [BP + 75], byte/word 12 (8bits/16bits respectively)
+        
     }
 
     fclose(file);
