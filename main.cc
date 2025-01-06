@@ -56,7 +56,7 @@ bool matches_mov_opcode(uint8_t byte, mov_mode *mov) {
     } else if (((byte >> 4) & 0b1111) == 0b1011) {
         *mov = imm_to_r;
         result = true;
-    } else if (((byte >> 1) & 0b111111) == 0b1010000) {
+    } else if (((byte >> 1) & 0b1111111) == 0b1010000) {
         *mov = mem_to_acc;
         result = true;
     } else if (((byte >> 1) & 0b1111111) == 0b1010001) {
@@ -222,9 +222,46 @@ int main(int argc, char *argv[]) {
                     break;
                 }
                 case mem_to_acc: {
+                    opcode.w = (byte & 0b00000001);
+                    if (opcode.w) {
+                        size_t read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_low = byte;
+
+                        read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_high = byte;
+
+                        printf("mov ax, [%d]\n", (((uint16_t) opcode.data_high << 8) | opcode.data_low));
+                    } else {
+                        size_t read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_low = byte;
+
+                        printf("mov ax, [%d]\n", opcode.data_low);
+                    }
+                    
                     break;
                 }
                 case acc_to_mem: {
+                    opcode.w = (byte & 0b00000001);
+                    if (opcode.w) {
+                        size_t read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_low = byte;
+
+                        read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_high = byte;
+
+                        printf("mov [%d], ax\n", (((uint16_t) opcode.data_high << 8) | opcode.data_low));
+                    } else {
+                        size_t read_byte = fread(&byte, 1, 1, file);
+                        if (!read_byte) { return 1; }
+                        opcode.data_low = byte;
+
+                        printf("mov [%d], ax\n", opcode.data_low);
+                    }
                     break;
                 }
                 case rm_to_seg: { break; }
